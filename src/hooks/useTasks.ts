@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, Task } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { createGhlTask, updateGhlTask, deleteGhlTask } from '@/lib/ghl-api';
 
 // Mapping deutsche zu englische Werte
 const priorityMap = {
@@ -71,11 +72,34 @@ export function useCreateTask() {
         .single();
 
       if (error) throw error;
+      
+      // Synchronize to GoHighLevel
+      try {
+        const ghlTask = await createGhlTask({
+          title: data.title,
+          body: data.description || undefined,
+          dueDate: data.due_date || undefined,
+          assignedTo: data.assigned_to || undefined,
+          contactId: data.contact_id || undefined,
+        });
+        
+        // Update local task with GHL task ID
+        if (ghlTask?.task?.id) {
+          await supabase
+            .from('tasks')
+            .update({ ghl_task_id: ghlTask.task.id })
+            .eq('id', data.id);
+        }
+      } catch (ghlError: any) {
+        console.error('GoHighLevel sync error:', ghlError);
+        toast.warning('Aufgabe erstellt, aber nicht zu GoHighLevel synchronisiert: ' + ghlError.message);
+      }
+      
       return data as Task;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Aufgabe erfolgreich erstellt');
+      toast.success('Aufgabe erfolgreich erstellt und zu GoHighLevel synchronisiert');
     },
     onError: (error) => {
       toast.error('Fehler beim Erstellen der Aufgabe: ' + error.message);
@@ -103,6 +127,23 @@ export function useUpdateTask() {
         .single();
 
       if (error) throw error;
+      
+      // Synchronize to GoHighLevel if task has ghl_task_id
+      if (data.ghl_task_id) {
+        try {
+          await updateGhlTask(data.ghl_task_id, {
+            title: data.title,
+            body: data.description || undefined,
+            dueDate: data.due_date || undefined,
+            assignedTo: data.assigned_to || undefined,
+            completed: data.status === 'done',
+          });
+        } catch (ghlError: any) {
+          console.error('GoHighLevel sync error:', ghlError);
+          toast.warning('Aufgabe aktualisiert, aber nicht zu GoHighLevel synchronisiert');
+        }
+      }
+      
       return data as Task;
     },
     onSuccess: () => {
@@ -120,12 +161,29 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: async (id: number) => {
+      // Get task to check if it has ghl_task_id
+      const { data: task } = await supabase
+        .from('tasks')
+        .select('ghl_task_id')
+        .eq('id', id)
+        .single();
+      
       const { error } = await supabase
         .from('tasks')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Delete from GoHighLevel if task has ghl_task_id
+      if (task?.ghl_task_id) {
+        try {
+          await deleteGhlTask(task.ghl_task_id);
+        } catch (ghlError: any) {
+          console.error('GoHighLevel delete error:', ghlError);
+          toast.warning('Aufgabe gelöscht, aber nicht aus GoHighLevel entfernt');
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -151,10 +209,10 @@ export function useUpdateTaskStatus() {
       // Konvertiere deutschen Status zu englischem für die Datenbank
       const dbStatus = statusMap[newStatus as keyof typeof statusMap];
       
-      // Get current task to log status history
+      // Get current task to log status history and check for ghl_task_id
       const { data: currentTask } = await supabase
         .from('tasks')
-        .select('status')
+        .select('status, ghl_task_id')
         .eq('id', id)
         .single();
 
@@ -175,6 +233,18 @@ export function useUpdateTaskStatus() {
           old_status: currentTask.status,
           new_status: dbStatus,
         }]);
+        
+        // Synchronize status to GoHighLevel
+        if (currentTask.ghl_task_id) {
+          try {
+            await updateGhlTask(currentTask.ghl_task_id, {
+              completed: dbStatus === 'done',
+            });
+          } catch (ghlError: any) {
+            console.error('GoHighLevel sync error:', ghlError);
+            toast.warning('Status aktualisiert, aber nicht zu GoHighLevel synchronisiert');
+          }
+        }
       }
 
       return data as Task;
