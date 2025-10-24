@@ -118,15 +118,12 @@ export async function deleteGhlTask(taskId: string) {
 }
 
 /**
- * Get users from GoHighLevel using the locations endpoint
- * The GHL API doesn't have a dedicated users list endpoint,
- * so we fetch the location which includes user information
+ * Get users from GoHighLevel
  */
 export async function getGhlUsers() {
-  const { token, locationId } = await getGhlCredentials();
+  const { token } = await getGhlCredentials();
 
-  // Use the locations endpoint to get location data including users
-  const response = await fetch(`${GHL_API_BASE_URL}/locations/${locationId}`, {
+  const response = await fetch(`${GHL_API_BASE_URL}/users/`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -148,11 +145,8 @@ export async function getGhlUsers() {
 
   const data = await response.json();
   
-  // Return users array from location data
-  // If no users found, return empty array
   return {
     users: data.users || [],
-    location: data
   };
 }
 
