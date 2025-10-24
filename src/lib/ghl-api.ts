@@ -121,9 +121,9 @@ export async function deleteGhlTask(taskId: string) {
  * Get users from GoHighLevel
  */
 export async function getGhlUsers() {
-  const { token } = await getGhlCredentials();
+  const { token, locationId } = await getGhlCredentials();
 
-  const response = await fetch(`${GHL_API_BASE_URL}/users/`, {
+  const response = await fetch(`${GHL_API_BASE_URL}/locations/${locationId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
