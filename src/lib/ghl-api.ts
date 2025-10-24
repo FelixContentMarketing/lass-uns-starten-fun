@@ -46,6 +46,19 @@ export async function createGhlTask(task: {
     throw new Error('contactId ist erforderlich zum Erstellen einer GHL-Aufgabe');
   }
 
+  // Only include assignedTo if it has a valid value
+  const requestBody: any = {
+    title: task.title,
+    body: task.body,
+    dueDate: task.dueDate,
+    completed: false,
+  };
+
+  // Only add assignedTo if it's provided and not empty
+  if (task.assignedTo && task.assignedTo !== 'unassigned') {
+    requestBody.assignedTo = task.assignedTo;
+  }
+
   const response = await fetch(`${GHL_API_BASE_URL}/contacts/${task.contactId}/tasks`, {
     method: 'POST',
     headers: {
@@ -53,13 +66,7 @@ export async function createGhlTask(task: {
       'Version': GHL_API_VERSION,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      title: task.title,
-      body: task.body,
-      dueDate: task.dueDate,
-      assignedTo: task.assignedTo,
-      completed: false,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
