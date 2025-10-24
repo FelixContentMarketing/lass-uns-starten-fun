@@ -13,7 +13,7 @@ const Tasks = () => {
 
   // Convert database tasks to UI format
   const tasks: Task[] = dbTasks?.map(task => ({
-    id: task.id.toString(),
+    id: task.id,
     title: task.title,
     description: task.description || "",
     status: task.status,

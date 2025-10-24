@@ -116,7 +116,7 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: number; updates: Partial<Task> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Task> }) => {
       // Konvertiere deutsche Werte zu englischen für die Datenbank
       const dbUpdates = {
         ...updates,
@@ -165,7 +165,7 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       // Get task to check if it has ghl_task_id and ghl_contact_id
       const { data: task } = await supabase
         .from('tasks')
@@ -208,7 +208,7 @@ export function useUpdateTaskStatus() {
       id, 
       newStatus 
     }: { 
-      id: number; 
+      id: string; 
       newStatus: Task['status'];
     }) => {
       // Konvertiere deutschen Status zu englischem für die Datenbank

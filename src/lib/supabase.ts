@@ -11,7 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database Types
 export type Task = {
-  id: number;
+  id: string; // UUID in Supabase
   ghl_task_id?: string;
   ghl_contact_id?: string;
   title: string;
@@ -19,35 +19,31 @@ export type Task = {
   status: 'posteingang' | 'in_freigabe' | 'in_bearbeitung' | 'erledigt';
   priority?: 'niedrig' | 'mittel' | 'hoch' | 'dringend';
   due_date?: string;
-  assigned_to_user_id?: number;
-  assigned_to_ghl_user_id?: string;
-  assigned_to?: string;
-  created_by_user_id?: number;
-  created_by?: string;
+  assigned_to?: string; // GHL User ID (references ghl_users.ghl_user_id)
+  created_by: string; // Supabase Auth User ID (UUID)
   created_at: string;
   updated_at: string;
-  completed_at?: string;
 };
 
 export type TaskStatusHistory = {
-  id: number;
-  task_id: number;
+  id: string; // UUID
+  task_id: string; // UUID reference to tasks.id
   old_status?: 'posteingang' | 'in_freigabe' | 'in_bearbeitung' | 'erledigt';
   new_status: 'posteingang' | 'in_freigabe' | 'in_bearbeitung' | 'erledigt';
   changed_at: string;
-  changed_by_user_id?: number;
+  changed_by: string; // Supabase Auth User ID (UUID)
 };
 
 export type TaskFile = {
-  id: number;
-  task_id: number;
+  id: string; // UUID
+  task_id: string; // UUID reference to tasks.id
   file_url: string;
   file_key: string;
   filename: string;
   mime_type?: string;
   file_size?: number;
   uploaded_at: string;
-  uploaded_by_user_id?: number;
+  uploaded_by: string; // Supabase Auth User ID (UUID)
 };
 
 export type GhlUser = {
@@ -59,11 +55,11 @@ export type GhlUser = {
 };
 
 export type AppSetting = {
-  id: number;
+  id: number; // BIGSERIAL in app_settings table
   key: string;
   value?: string;
   description?: string;
   updated_at: string;
-  updated_by_user_id?: number;
+  updated_by_user_id?: string; // Supabase Auth User ID (UUID)
 };
 
