@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTask } from "@/hooks/useTasks";
 import { useGhlUsers, useSyncGhlUsers } from "@/hooks/useGhlUsers";
-import { Loader2, Sparkles, Upload, RefreshCw } from "lucide-react";
+import { Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
@@ -23,8 +23,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [dueDate, setDueDate] = useState("");
   const [emailText, setEmailText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
-  const [assignedToGhlUserId, setAssignedToGhlUserId] = useState<string>("");
+  const [assignedToGhlUserId, setAssignedToGhlUserId] = useState<string>("unassigned");
   const [ghlContactId, setGhlContactId] = useState<string>("");
 
   const createTask = useCreateTask();
@@ -65,15 +64,15 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           'Authorization': `Bearer ${setting.value}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4',
           messages: [
             {
               role: 'system',
-              content: 'Du bist ein Assistent, der E-Mails analysiert und strukturierte Aufgaben daraus erstellt. Extrahiere Titel, Beschreibung, Priorität (niedrig/mittel/hoch/dringend) und Fälligkeitsdatum. Antworte nur mit JSON im Format: {"title": "...", "description": "...", "priority": "...", "dueDate": "YYYY-MM-DD oder null"}'
+              content: 'Du bist ein Assistent, der E-Mails analysiert und Aufgaben extrahiert. Antworte im JSON-Format mit: title, description, priority (niedrig/mittel/hoch/dringend), due_date (YYYY-MM-DD oder null).'
             },
             {
               role: 'user',
-              content: `Analysiere diese E-Mail und erstelle eine Aufgabe:\n\n${emailText}`
+              content: `Analysiere diese E-Mail und extrahiere eine Aufgabe:\n\n${emailText}`
             }
           ],
           response_format: { type: "json_object" }
@@ -87,16 +86,15 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       const data = await response.json();
       const result = JSON.parse(data.choices[0].message.content);
 
-      setTitle(result.title || '');
-      setDescription(result.description || '');
-      setPriority(result.priority || 'mittel');
-      if (result.dueDate) {
-        setDueDate(result.dueDate);
-      }
+      // Fill form with AI results
+      if (result.title) setTitle(result.title);
+      if (result.description) setDescription(result.description);
+      if (result.priority) setPriority(result.priority);
+      if (result.due_date) setDueDate(result.due_date);
 
-      toast.success('E-Mail erfolgreich analysiert!');
+      toast.success("E-Mail erfolgreich analysiert!");
     } catch (error: any) {
-      toast.error('Fehler bei der Analyse: ' + error.message);
+      toast.error('Fehler bei der KI-Analyse: ' + error.message);
     } finally {
       setAnalyzing(false);
     }
@@ -119,47 +117,16 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         return;
       }
 
-      const newTask = await createTask.mutateAsync({
+      await createTask.mutateAsync({
         title,
         description,
         priority,
         due_date: dueDate || undefined,
         status: 'posteingang',
         created_by: user.id,
-        assigned_to: assignedToGhlUserId || undefined,
+        assigned_to: assignedToGhlUserId !== "unassigned" ? assignedToGhlUserId : undefined,
         ghl_contact_id: ghlContactId || undefined,
       });
-
-      // Upload files if any
-      if (files.length > 0 && newTask) {
-        for (const file of files) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Math.random()}.${fileExt}`;
-          const filePath = `task-files/${newTask.id}/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('task-attachments')
-            .upload(filePath, file);
-
-          if (uploadError) {
-            console.error('File upload error:', uploadError);
-            continue;
-          }
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('task-attachments')
-            .getPublicUrl(filePath);
-
-          await supabase.from('task_files').insert({
-            task_id: newTask.id,
-            file_url: publicUrl,
-            file_key: filePath,
-            filename: file.name,
-            mime_type: file.type,
-            file_size: file.size,
-          });
-        }
-      }
 
       // Reset form
       setTitle("");
@@ -167,8 +134,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       setPriority("mittel");
       setDueDate("");
       setEmailText("");
-      setFiles([]);
-      setAssignedToGhlUserId("");
+      setAssignedToGhlUserId("unassigned");
       setGhlContactId("");
       onOpenChange(false);
     } catch (error: any) {
@@ -217,14 +183,14 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </Button>
           </div>
 
-          {/* Aufgaben-Details */}
+          {/* Manual Input */}
           <div className="space-y-2">
             <Label htmlFor="title">Titel *</Label>
             <Input
               id="title"
+              placeholder="z.B. Angebot erstellen für Kunde XY"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Aufgabentitel"
               required
             />
           </div>
@@ -233,9 +199,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             <Label htmlFor="description">Beschreibung</Label>
             <Textarea
               id="description"
+              placeholder="Weitere Details zur Aufgabe..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detaillierte Beschreibung..."
               rows={4}
             />
           </div>
@@ -286,7 +252,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 <SelectValue placeholder="Beauftragten auswählen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nicht zugewiesen</SelectItem>
+                <SelectItem value="unassigned">Nicht zugewiesen</SelectItem>
                 {ghlUsers.map((user) => (
                   <SelectItem key={user.id} value={user.ghl_user_id}>
                     {user.name || user.email || user.ghl_user_id}
@@ -303,30 +269,13 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </Label>
             <Input
               id="ghl-contact-id"
+              placeholder="z.B. nCv8ggmlFgT8QhXWUEKX"
               value={ghlContactId}
               onChange={(e) => setGhlContactId(e.target.value)}
-              placeholder="z.B. nCv8ggmlFgT8QhXWUEKX"
             />
             <p className="text-xs text-muted-foreground">
               Nur erforderlich, wenn die Aufgabe mit GoHighLevel synchronisiert werden soll
             </p>
-          </div>
-
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="files">Dateien anhängen</Label>
-            <Input
-              id="files"
-              type="file"
-              multiple
-              onChange={(e) => setFiles(Array.from(e.target.files || []))}
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-            />
-            {files.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {files.length} Datei(en) ausgewählt
-              </p>
-            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
