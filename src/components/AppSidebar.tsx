@@ -1,5 +1,5 @@
-import { LayoutDashboard, Users, Settings, FileText } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { LayoutDashboard, Users, Settings, FileText, LogOut } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -10,9 +10,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { APP_TITLE, APP_LOGO } from "@/lib/constants";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -24,6 +28,13 @@ const menuItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Erfolgreich abgemeldet");
+    navigate("/login");
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -66,6 +77,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start" 
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Abmelden
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }
