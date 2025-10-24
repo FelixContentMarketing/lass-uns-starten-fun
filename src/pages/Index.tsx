@@ -51,6 +51,8 @@ const Index = () => {
     description: task.description || "",
     status: task.status,
     priority: task.priority || "mittel",
+    assignedTo: task.assigned_to || undefined,
+    ghlContactId: task.ghl_contact_id || undefined,
     dueDate: task.due_date,
     createdAt: task.created_at,
     updatedAt: task.updated_at,

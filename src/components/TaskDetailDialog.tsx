@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateTask, useDeleteTask } from "@/hooks/useTasks";
-import { useGhlUsers } from "@/hooks/useGhlUsers";
+import { useGhlUsers, useSyncGhlUsers } from "@/hooks/useGhlUsers";
+import { useGhlContacts, useSyncGhlContacts } from "@/hooks/useGhlContacts";
 import { Task } from "@/lib/types";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -33,11 +34,28 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const [priority, setPriority] = useState<"niedrig" | "mittel" | "hoch" | "dringend">("mittel");
   const [status, setStatus] = useState<"posteingang" | "in_freigabe" | "in_bearbeitung" | "erledigt">("posteingang");
   const [dueDate, setDueDate] = useState("");
+  const [assignedToGhlUserId, setAssignedToGhlUserId] = useState<string>("unassigned");
+  const [ghlContactId, setGhlContactId] = useState<string>("none");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
-  const { data: ghlUsers = [] } = useGhlUsers();
+  const { data: ghlUsers = [], isLoading: loadingUsers } = useGhlUsers();
+  const syncUsers = useSyncGhlUsers();
+  const { data: ghlContacts = [], isLoading: loadingContacts } = useGhlContacts();
+  const syncContacts = useSyncGhlContacts();
+
+  // Sync GHL users and contacts on first open
+  useEffect(() => {
+    if (open) {
+      if (ghlUsers.length === 0) {
+        syncUsers.mutate();
+      }
+      if (ghlContacts.length === 0) {
+        syncContacts.mutate();
+      }
+    }
+  }, [open]);
 
   // Initialize form with task data
   useEffect(() => {
@@ -47,6 +65,8 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
       setPriority(task.priority);
       setStatus(task.status);
       setDueDate(task.dueDate || "");
+      setAssignedToGhlUserId(task.assignedTo || "unassigned");
+      setGhlContactId(task.ghlContactId || "none");
     }
   }, [task]);
 
@@ -67,6 +87,8 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
           priority,
           status,
           due_date: dueDate || undefined,
+          assigned_to: assignedToGhlUserId === "unassigned" ? null : assignedToGhlUserId,
+          ghl_contact_id: ghlContactId === "none" ? null : ghlContactId,
         },
       });
 
@@ -127,21 +149,6 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select value={status} onValueChange={(value: any) => setStatus(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="posteingang">Posteingang</SelectItem>
-                    <SelectItem value="in_bearbeitung">In Bearbeitung</SelectItem>
-                    <SelectItem value="in_freigabe">In Freigabe</SelectItem>
-                    <SelectItem value="erledigt">Erledigt</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="edit-priority">Priorität</Label>
                 <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
                   <SelectTrigger>
@@ -155,16 +162,98 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-due-date">Fälligkeitsdatum</Label>
+                <Input
+                  id="edit-due-date"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-due-date">Fälligkeitsdatum</Label>
-              <Input
-                id="edit-due-date"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="edit-assigned-to">Zuweisen an</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => syncUsers.mutate()}
+                  disabled={syncUsers.isPending}
+                >
+                  <RefreshCw className={`h-3 w-3 ${syncUsers.isPending ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              <Select 
+                value={assignedToGhlUserId} 
+                onValueChange={setAssignedToGhlUserId}
+                disabled={loadingUsers}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wähle einen User..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Nicht zugewiesen</SelectItem>
+                  {ghlUsers.map((user) => (
+                    <SelectItem key={user.ghl_user_id} value={user.ghl_user_id}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="edit-contact">GoHighLevel Kontakt</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => syncContacts.mutate()}
+                  disabled={syncContacts.isPending}
+                >
+                  <RefreshCw className={`h-3 w-3 ${syncContacts.isPending ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              <Select 
+                value={ghlContactId} 
+                onValueChange={setGhlContactId}
+                disabled={loadingContacts}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wähle einen Kontakt..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Kein Kontakt (keine GHL-Synchronisation)</SelectItem>
+                  {ghlContacts.map((contact) => (
+                    <SelectItem key={contact.ghl_contact_id} value={contact.ghl_contact_id}>
+                      {contact.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Erforderlich für bidirektionale GoHighLevel-Synchronisation
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select value={status} onValueChange={(value: any) => setStatus(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="posteingang">Posteingang</SelectItem>
+                  <SelectItem value="in_bearbeitung">In Bearbeitung</SelectItem>
+                  <SelectItem value="in_freigabe">In Freigabe</SelectItem>
+                  <SelectItem value="erledigt">Erledigt</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">

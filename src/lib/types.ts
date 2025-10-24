@@ -7,6 +7,7 @@ export interface Task {
   status: TaskColumn;
   priority: TaskPriority;
   assignedTo?: string;
+  ghlContactId?: string;
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
