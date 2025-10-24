@@ -51,17 +51,18 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
     console.log('TaskDetailDialog - Loading Contacts:', loadingContacts);
   }, [ghlContacts, loadingContacts]);
 
-  // Sync GHL users and contacts on first open
+  // Sync GHL users and contacts when dialog opens
   useEffect(() => {
     if (open) {
-      if (ghlUsers.length === 0 && !loadingUsers) {
+      // Always sync to ensure we have the latest data
+      if (!loadingUsers && !syncUsers.isPending) {
         syncUsers.mutate();
       }
-      if (ghlContacts.length === 0 && !loadingContacts) {
+      if (!loadingContacts && !syncContacts.isPending) {
         syncContacts.mutate();
       }
     }
-  }, [open, ghlUsers.length, ghlContacts.length, loadingUsers, loadingContacts]);
+  }, [open]);
 
   // Initialize form with task data
   useEffect(() => {
