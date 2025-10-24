@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Netflix-inspired Light Mode (rarely used) */
+    /* Netflix-inspired Light Mode */
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
 
@@ -39,53 +39,53 @@ All colors MUST be HSL.
 
     --radius: 0.25rem;
 
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 95%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 40 32% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 12%;
     --sidebar-ring: 40 32% 52%;
   }
 
   .dark {
-    /* Netflix-inspired Dark Mode (main theme) */
+    /* Netflix Dark Mode - Very dark backgrounds like Netflix */
     --background: 0 0% 8%;
-    --foreground: 0 0% 95%;
+    --foreground: 0 0% 90%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 90%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 90%;
 
     --primary: 40 32% 52%;
-    --primary-foreground: 0 0% 10%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 0 0% 15%;
+    --accent: 0 0% 14%;
     --accent-foreground: 40 32% 52%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 95%;
+    --destructive-foreground: 0 0% 90%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 18%;
+    --border: 0 0% 18%;
+    --input: 0 0% 14%;
     --ring: 40 32% 52%;
 
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 95%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 40 32% 52%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 12%;
     --sidebar-ring: 40 32% 52%;
   }
 }
@@ -102,20 +102,26 @@ All colors MUST be HSL.
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Force dark mode by default */
+  html {
+    color-scheme: dark;
+  }
+
   /* Netflix-style scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-background;
+    background: hsl(0 0% 8%);
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted rounded-lg;
+    background: hsl(0 0% 20%);
+    border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground;
+    background: hsl(0 0% 30%);
   }
 }
