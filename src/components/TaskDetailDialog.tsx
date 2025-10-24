@@ -45,17 +45,23 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
   const { data: ghlContacts = [], isLoading: loadingContacts } = useGhlContacts();
   const syncContacts = useSyncGhlContacts();
 
+  // Debug: Log contacts when they change
+  useEffect(() => {
+    console.log('TaskDetailDialog - GHL Contacts:', ghlContacts);
+    console.log('TaskDetailDialog - Loading Contacts:', loadingContacts);
+  }, [ghlContacts, loadingContacts]);
+
   // Sync GHL users and contacts on first open
   useEffect(() => {
     if (open) {
-      if (ghlUsers.length === 0) {
+      if (ghlUsers.length === 0 && !loadingUsers) {
         syncUsers.mutate();
       }
-      if (ghlContacts.length === 0) {
+      if (ghlContacts.length === 0 && !loadingContacts) {
         syncContacts.mutate();
       }
     }
-  }, [open]);
+  }, [open, ghlUsers.length, ghlContacts.length, loadingUsers, loadingContacts]);
 
   // Initialize form with task data
   useEffect(() => {
