@@ -58,6 +58,7 @@ export async function createGhlTask(task: {
       body: task.body,
       dueDate: task.dueDate,
       assignedTo: task.assignedTo,
+      completed: false,
     }),
   });
 
