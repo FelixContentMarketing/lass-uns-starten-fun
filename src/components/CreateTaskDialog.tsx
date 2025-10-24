@@ -25,7 +25,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [emailText, setEmailText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [assignedToGhlUserId, setAssignedToGhlUserId] = useState<string>("unassigned");
-  const [ghlContactId, setGhlContactId] = useState<string>("");
+  const [ghlContactId, setGhlContactId] = useState<string>("none");
 
   const createTask = useCreateTask();
   const { data: ghlUsers = [], isLoading: loadingUsers } = useGhlUsers();
@@ -133,7 +133,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         status: 'posteingang',
         created_by: user.id,
         assigned_to: assignedToGhlUserId === 'unassigned' ? undefined : assignedToGhlUserId,
-        ghl_contact_id: ghlContactId || undefined,
+        ghl_contact_id: ghlContactId === 'none' ? undefined : ghlContactId,
       });
 
       // Reset form
@@ -143,7 +143,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       setDueDate("");
       setEmailText("");
       setAssignedToGhlUserId("unassigned");
-      setGhlContactId("");
+      setGhlContactId("none");
       onOpenChange(false);
     } catch (error: any) {
       toast.error('Fehler beim Erstellen: ' + error.message);
@@ -293,7 +293,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 <SelectValue placeholder="Kontakt auswählen (für GHL-Sync)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Kein Kontakt (keine GHL-Synchronisation)</SelectItem>
+                <SelectItem value="none">Kein Kontakt (keine GHL-Synchronisation)</SelectItem>
                 {loadingContacts && (
                   <SelectItem value="loading" disabled>
                     <Loader2 className="h-4 w-4 animate-spin" />
