@@ -118,6 +118,80 @@ export async function deleteGhlTask(taskId: string) {
 }
 
 /**
+ * Get tasks from GoHighLevel
+ */
+export async function getGhlTasks() {
+  const { token, locationId } = await getGhlCredentials();
+
+  const response = await fetch(`${GHL_API_BASE_URL}/contacts/tasks/search?locationId=${locationId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Version': GHL_API_VERSION,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = errorText;
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorText;
+    } catch (e) {
+      // If not JSON, use the text as is
+    }
+    throw new Error(`GHL API Error: ${errorMessage}`);
+  }
+
+  const data = await response.json();
+  return data.tasks || [];
+}
+
+/**
+ * Sync GHL tasks to local database
+ */
+export async function syncGhlTasks() {
+  const tasks = await getGhlTasks();
+
+  if (!tasks || tasks.length === 0) {
+    return { synced: 0, message: 'No tasks found in GoHighLevel' };
+  }
+
+  let syncedCount = 0;
+
+  for (const task of tasks) {
+    // Map GHL task status to our Kanban status
+    let status = 'posteingang';
+    if (task.completed) {
+      status = 'erledigt';
+    } else if (task.status === 'in_progress') {
+      status = 'in_bearbeitung';
+    }
+
+    const { error } = await supabase
+      .from('tasks')
+      .upsert({
+        ghl_task_id: task.id,
+        title: task.title,
+        description: task.body || null,
+        status: status,
+        priority: 'medium',
+        due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
+        assigned_to: task.assignedTo || null,
+        contact_id: task.contactId || null,
+      }, {
+        onConflict: 'ghl_task_id',
+      });
+
+    if (!error) {
+      syncedCount++;
+    }
+  }
+
+  return { synced: syncedCount, total: tasks.length };
+}
+
+/**
  * Get users from GoHighLevel
  */
 export async function getGhlUsers() {

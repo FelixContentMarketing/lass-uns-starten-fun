@@ -3,14 +3,30 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { Task as DBTask } from "@/lib/supabase";
 import { Task } from "@/lib/types";
+import { syncGhlTasks } from "@/lib/ghl-api";
+import { toast } from "sonner";
 
 const Index = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { data: dbTasks, isLoading } = useTasks();
+  const [syncing, setSyncing] = useState(false);
+  const { data: dbTasks, isLoading, refetch } = useTasks();
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncGhlTasks();
+      await refetch();
+      toast.success(`${result.synced} von ${result.total} Aufgaben synchronisiert`);
+    } catch (error: any) {
+      toast.error('Fehler bei der Synchronisation: ' + error.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   // Convert database tasks to UI format
   const tasks: Task[] = dbTasks?.map(task => ({
@@ -38,10 +54,16 @@ const Index = () => {
               Verwalte deine Aufgaben im Kanban-Style
             </p>
           </div>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Neue Aufgabe
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSync} disabled={syncing} variant="outline">
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+              Synchronisieren
+            </Button>
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Neue Aufgabe
+            </Button>
+          </div>
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
