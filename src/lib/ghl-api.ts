@@ -200,12 +200,14 @@ export async function syncGhlTasks() {
       status = 'in_progress';
     }
 
-    // Check if task already exists
-    const { data: existingTask, error: selectError } = await supabase
+    // Check if task already exists by matching title AND contact_id (since ghl_task_id might not be set)
+    const { data: existingTasks } = await supabase
       .from('tasks')
-      .select('id')
-      .eq('ghl_task_id', task.id)
-      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error when no match
+      .select('id, ghl_task_id')
+      .or(`ghl_task_id.eq.${task.id},and(title.eq.${task.title},ghl_contact_id.eq.${task.contactId})`)
+      .limit(1);
+    
+    const existingTask = existingTasks && existingTasks.length > 0 ? existingTasks[0] : null;
 
     const taskData = {
       ghl_task_id: task.id,
