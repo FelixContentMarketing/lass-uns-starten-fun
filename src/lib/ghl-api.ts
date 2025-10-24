@@ -252,13 +252,14 @@ export async function syncGhlTasks() {
   };
 }
 
+
 /**
  * Get users from GoHighLevel
  */
 export async function getGhlUsers() {
   const { token, locationId } = await getGhlCredentials();
 
-  const response = await fetch(`${GHL_API_BASE_URL}/locations/${locationId}`, {
+  const response = await fetch(`${GHL_API_BASE_URL}/users/?locationId=${locationId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
