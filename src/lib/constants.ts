@@ -10,8 +10,8 @@ export const TASK_COLUMNS = {
 
 export const COLUMN_LABELS = {
   [TASK_COLUMNS.INBOX]: "Posteingang",
-  [TASK_COLUMNS.IN_APPROVAL]: "In Freigabe",
   [TASK_COLUMNS.IN_PROGRESS]: "In Bearbeitung",
+  [TASK_COLUMNS.IN_APPROVAL]: "In Freigabe",
   [TASK_COLUMNS.DONE]: "Erledigt",
 } as const;
 

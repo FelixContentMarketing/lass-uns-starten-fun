@@ -136,11 +136,9 @@ export function KanbanBoard({ tasks, onTaskClick, onTaskMove }: KanbanBoardProps
     const overId = over.id as string;
     
     // Check if we're over a column
-    const overColumn = columns.find(col => col === overId);
-    if (!overColumn) return;
-    
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || task.status === overColumn) return;
+    if (columns.includes(overId as TaskColumn)) {
+      return;
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -154,11 +152,21 @@ export function KanbanBoard({ tasks, onTaskClick, onTaskMove }: KanbanBoardProps
     
     if (!task) return;
 
-    // Check if dropped over a column
-    const overColumn = over.id as TaskColumn;
+    // Check if dropped over a column or another task
+    let targetColumn: TaskColumn | null = null;
     
-    if (columns.includes(overColumn) && task.status !== overColumn) {
-      onTaskMove?.(taskId, overColumn);
+    if (columns.includes(over.id as TaskColumn)) {
+      targetColumn = over.id as TaskColumn;
+    } else {
+      // Dropped over another task - find its column
+      const overTask = tasks.find(t => t.id === over.id);
+      if (overTask) {
+        targetColumn = overTask.status;
+      }
+    }
+    
+    if (targetColumn && task.status !== targetColumn) {
+      onTaskMove?.(taskId, targetColumn);
     }
   };
 
