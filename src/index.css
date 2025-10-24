@@ -50,42 +50,42 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Netflix Dark Mode - Very dark backgrounds like Netflix */
-    --background: 0 0% 8%;
+    /* Netflix Dark Mode - Ultra dark backgrounds like Netflix */
+    --background: 0 0% 5%;
     --foreground: 0 0% 90%;
 
-    --card: 0 0% 11%;
+    --card: 0 0% 9%;
     --card-foreground: 0 0% 90%;
 
-    --popover: 0 0% 9%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 90%;
 
     --primary: 40 32% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 90%;
 
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 0 0% 14%;
+    --accent: 0 0% 12%;
     --accent-foreground: 40 32% 52%;
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 90%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 14%;
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
     --ring: 40 32% 52%;
 
-    --sidebar-background: 0 0% 5%;
+    --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 40 32% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent: 0 0% 8%;
     --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 12%;
+    --sidebar-border: 0 0% 10%;
     --sidebar-ring: 40 32% 52%;
   }
 }
@@ -113,15 +113,15 @@ All colors MUST be HSL.
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(0 0% 8%);
+    background: hsl(0 0% 5%);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 20%);
+    background: hsl(0 0% 18%);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(0 0% 30%);
+    background: hsl(0 0% 25%);
   }
 }

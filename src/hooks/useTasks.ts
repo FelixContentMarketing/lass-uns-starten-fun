@@ -247,18 +247,41 @@ export function useUpdateTaskStatus() {
             });
           } catch (ghlError: any) {
             console.error('GoHighLevel sync error:', ghlError);
-            toast.warning('Status aktualisiert, aber nicht zu GoHighLevel synchronisiert');
+            // Stille Warnung - nicht bei jedem Drag & Drop Toast anzeigen
           }
         }
       }
 
       return data as Task;
     },
+    // Optimistic update für sofortige UI-Reaktion
+    onMutate: async ({ id, newStatus }) => {
+      // Cancel laufende Queries
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      
+      // Snapshot des vorherigen Zustands
+      const previousTasks = queryClient.getQueryData(['tasks']);
+      
+      // Optimistisch updaten
+      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) => {
+        if (!old) return old;
+        return old.map(task => 
+          task.id === id 
+            ? { ...task, status: newStatus }
+            : task
+        );
+      });
+      
+      return { previousTasks };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Status aktualisiert');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Bei Fehler: Rollback zum vorherigen Zustand
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks'], context.previousTasks);
+      }
       toast.error('Fehler beim Statuswechsel: ' + error.message);
     },
   });
