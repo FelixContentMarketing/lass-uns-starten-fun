@@ -89,4 +89,153 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ============================================
+// Task Queries
+// ============================================
+
+export async function getAllTasks() {
+  const db = await getDb();
+  if (!db) return [];
+  const { tasks } = await import("../drizzle/schema");
+  return db.select().from(tasks).orderBy(tasks.createdAt);
+}
+
+export async function getTaskById(taskId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const { tasks } = await import("../drizzle/schema");
+  const result = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getTasksByStatus(status: "posteingang" | "in_freigabe" | "in_bearbeitung" | "erledigt") {
+  const db = await getDb();
+  if (!db) return [];
+  const { tasks } = await import("../drizzle/schema");
+  return db.select().from(tasks).where(eq(tasks.status, status));
+}
+
+export async function createTask(task: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { tasks } = await import("../drizzle/schema");
+  await db.insert(tasks).values(task);
+  // Return the task to get the ID from the database
+  const inserted = await db.select().from(tasks).orderBy(tasks.id).limit(1);
+  return inserted[0]?.id;
+}
+
+export async function updateTask(taskId: number, updates: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { tasks } = await import("../drizzle/schema");
+  await db.update(tasks).set(updates).where(eq(tasks.id, taskId));
+}
+
+export async function deleteTask(taskId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { tasks } = await import("../drizzle/schema");
+  await db.delete(tasks).where(eq(tasks.id, taskId));
+}
+
+// ============================================
+// Task Status History
+// ============================================
+
+export async function addTaskStatusHistory(history: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { taskStatusHistory } = await import("../drizzle/schema");
+  await db.insert(taskStatusHistory).values(history);
+}
+
+export async function getTaskStatusHistory(taskId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { taskStatusHistory } = await import("../drizzle/schema");
+  return db.select().from(taskStatusHistory).where(eq(taskStatusHistory.taskId, taskId)).orderBy(taskStatusHistory.changedAt);
+}
+
+// ============================================
+// Task Files
+// ============================================
+
+export async function addTaskFile(file: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { taskFiles } = await import("../drizzle/schema");
+  await db.insert(taskFiles).values(file);
+  // Return the file to get the ID from the database
+  const inserted = await db.select().from(taskFiles).orderBy(taskFiles.id).limit(1);
+  return inserted[0]?.id;
+}
+
+export async function getTaskFiles(taskId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { taskFiles } = await import("../drizzle/schema");
+  return db.select().from(taskFiles).where(eq(taskFiles.taskId, taskId));
+}
+
+export async function deleteTaskFile(fileId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { taskFiles } = await import("../drizzle/schema");
+  await db.delete(taskFiles).where(eq(taskFiles.id, fileId));
+}
+
+// ============================================
+// GHL Users
+// ============================================
+
+export async function getAllGhlUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  const { ghlUsers } = await import("../drizzle/schema");
+  return db.select().from(ghlUsers);
+}
+
+export async function upsertGhlUser(user: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { ghlUsers } = await import("../drizzle/schema");
+  await db.insert(ghlUsers).values(user).onDuplicateKeyUpdate({
+    set: {
+      name: user.name,
+      email: user.email,
+      lastSyncedAt: new Date(),
+    },
+  });
+}
+
+// ============================================
+// App Settings
+// ============================================
+
+export async function getSetting(key: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const { appSettings } = await import("../drizzle/schema");
+  const result = await db.select().from(appSettings).where(eq(appSettings.key, key)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertSetting(key: string, value: string, description?: string, userId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { appSettings } = await import("../drizzle/schema");
+  await db.insert(appSettings).values({
+    key,
+    value,
+    description,
+    updatedByUserId: userId,
+  }).onDuplicateKeyUpdate({
+    set: {
+      value,
+      description,
+      updatedByUserId: userId,
+      updatedAt: new Date(),
+    },
+  });
+}
