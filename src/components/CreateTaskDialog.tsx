@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTask } from "@/hooks/useTasks";
 import { useGhlUsers, useSyncGhlUsers } from "@/hooks/useGhlUsers";
+import { useGhlContacts, useSyncGhlContacts } from "@/hooks/useGhlContacts";
 import { Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -29,11 +30,18 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const createTask = useCreateTask();
   const { data: ghlUsers = [], isLoading: loadingUsers } = useGhlUsers();
   const syncUsers = useSyncGhlUsers();
+  const { data: ghlContacts = [], isLoading: loadingContacts } = useGhlContacts();
+  const syncContacts = useSyncGhlContacts();
 
-  // Sync GHL users on first open
+  // Sync GHL users and contacts on first open
   useEffect(() => {
-    if (open && ghlUsers.length === 0) {
-      syncUsers.mutate();
+    if (open) {
+      if (ghlUsers.length === 0) {
+        syncUsers.mutate();
+      }
+      if (ghlContacts.length === 0) {
+        syncContacts.mutate();
+      }
     }
   }, [open]);
 
@@ -264,19 +272,42 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </Select>
           </div>
 
-          {/* GHL Contact ID */}
+          {/* GHL Contact */}
           <div className="space-y-2">
-            <Label htmlFor="ghl-contact-id">
-              GoHighLevel Kontakt-ID (Optional)
-            </Label>
-            <Input
-              id="ghl-contact-id"
-              placeholder="z.B. nCv8ggmlFgT8QhXWUEKX"
-              value={ghlContactId}
-              onChange={(e) => setGhlContactId(e.target.value)}
-            />
+            <div className="flex items-center justify-between">
+              <Label htmlFor="ghl-contact">
+                GoHighLevel Kontakt
+              </Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => syncContacts.mutate()}
+                disabled={syncContacts.isPending}
+              >
+                <RefreshCw className={`h-3 w-3 ${syncContacts.isPending ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            <Select value={ghlContactId} onValueChange={setGhlContactId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Kontakt auswählen (für GHL-Sync)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Kein Kontakt (keine GHL-Synchronisation)</SelectItem>
+                {loadingContacts && (
+                  <SelectItem value="loading" disabled>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </SelectItem>
+                )}
+                {ghlContacts.map((contact: any) => (
+                  <SelectItem key={contact.id} value={contact.id}>
+                    {contact.name || contact.email || contact.phone || contact.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
-              Nur erforderlich, wenn die Aufgabe mit GoHighLevel synchronisiert werden soll
+              Erforderlich für bidirektionale GoHighLevel-Synchronisation
             </p>
           </div>
 

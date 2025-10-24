@@ -302,3 +302,33 @@ export async function syncGhlUsers() {
   return result;
 }
 
+/**
+ * Get contacts from GoHighLevel
+ */
+export async function getGhlContacts() {
+  const { token, locationId } = await getGhlCredentials();
+
+  const response = await fetch(`${GHL_API_BASE_URL}/contacts/?locationId=${locationId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Version': GHL_API_VERSION,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = errorText;
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorText;
+    } catch (e) {
+      // If not JSON, use the text as is
+    }
+    throw new Error(`GHL API Error: ${errorMessage}`);
+  }
+
+  const data = await response.json();
+  return data.contacts || [];
+}
+
