@@ -99,12 +99,21 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
     }
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Nicht angemeldet");
+        return;
+      }
+
       const newTask = await createTask.mutateAsync({
         title,
         description,
         priority,
         due_date: dueDate || undefined,
         status: 'posteingang',
+        created_by: user.id,
       });
 
       // Upload files if any

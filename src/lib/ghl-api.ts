@@ -160,12 +160,12 @@ export async function syncGhlTasks() {
   let syncedCount = 0;
 
   for (const task of tasks) {
-    // Map GHL task status to our Kanban status
-    let status = 'posteingang';
+    // Map GHL task status to our Kanban status (use English values for DB)
+    let status = 'inbox';
     if (task.completed) {
-      status = 'erledigt';
+      status = 'done';
     } else if (task.status === 'in_progress') {
-      status = 'in_bearbeitung';
+      status = 'in_progress';
     }
 
     const { error } = await supabase

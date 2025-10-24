@@ -20,8 +20,10 @@ export type Task = {
   due_date?: string;
   assigned_to_user_id?: number;
   assigned_to_ghl_user_id?: string;
+  assigned_to?: string;
   contact_id?: string;
   created_by_user_id?: number;
+  created_by?: string;
   created_at: string;
   updated_at: string;
   completed_at?: string;
