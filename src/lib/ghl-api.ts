@@ -118,14 +118,14 @@ export async function deleteGhlTask(taskId: string) {
 }
 
 /**
- * Get users from GoHighLevel
- * Note: GHL API doesn't have a direct "list all users" endpoint.
- * This function uses the locations endpoint to get users.
+ * Get users from GoHighLevel using the locations endpoint
+ * The GHL API doesn't have a dedicated users list endpoint,
+ * so we fetch the location which includes user information
  */
 export async function getGhlUsers() {
   const { token, locationId } = await getGhlCredentials();
 
-  // Try the locations endpoint which includes users
+  // Use the locations endpoint to get location data including users
   const response = await fetch(`${GHL_API_BASE_URL}/locations/${locationId}`, {
     method: 'GET',
     headers: {
@@ -135,14 +135,21 @@ export async function getGhlUsers() {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`GHL API Error: ${JSON.parse(error).message || error}`);
+    const errorText = await response.text();
+    let errorMessage = errorText;
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorText;
+    } catch (e) {
+      // If not JSON, use the text as is
+    }
+    throw new Error(`GHL API Error: ${errorMessage}`);
   }
 
   const data = await response.json();
   
-  // Extract users from location data if available
-  // If not available, return empty array
+  // Return users array from location data
+  // If no users found, return empty array
   return {
     users: data.users || [],
     location: data
@@ -153,14 +160,19 @@ export async function getGhlUsers() {
  * Sync GHL users to local database
  */
 export async function syncGhlUsers() {
-  const users = await getGhlUsers();
+  const result = await getGhlUsers();
+  const users = result.users;
 
-  for (const user of users.users || []) {
+  if (!users || users.length === 0) {
+    throw new Error('No users found in GoHighLevel location');
+  }
+
+  for (const user of users) {
     await supabase
       .from('ghl_users')
       .upsert({
         ghl_user_id: user.id,
-        name: user.name,
+        name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         email: user.email,
         last_synced_at: new Date().toISOString(),
       }, {
@@ -168,6 +180,6 @@ export async function syncGhlUsers() {
       });
   }
 
-  return users;
+  return result;
 }
 
