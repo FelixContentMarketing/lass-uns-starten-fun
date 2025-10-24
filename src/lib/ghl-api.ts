@@ -50,7 +50,7 @@ export async function createGhlTask(task: {
   const requestBody: any = {
     title: task.title,
     body: task.body,
-    dueDate: task.dueDate,
+    dueDate: task.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default: 7 days from now
     completed: false,
   };
 
