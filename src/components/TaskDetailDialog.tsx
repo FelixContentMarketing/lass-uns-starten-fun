@@ -245,9 +245,9 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Kein Kontakt (keine GHL-Synchronisation)</SelectItem>
-                  {ghlContacts.map((contact) => (
-                    <SelectItem key={contact.ghl_contact_id} value={contact.ghl_contact_id}>
-                      {contact.name}
+                  {ghlContacts.map((contact: any) => (
+                    <SelectItem key={contact.id} value={contact.id}>
+                      {contact.name || contact.email || contact.phone || contact.id}
                     </SelectItem>
                   ))}
                 </SelectContent>
