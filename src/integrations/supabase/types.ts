@@ -213,6 +213,8 @@ export type Database = {
           created_by: string
           description: string | null
           due_date: string | null
+          ghl_contact_id: string | null
+          ghl_task_id: string | null
           id: string
           priority: Database["public"]["Enums"]["task_priority"]
           status: Database["public"]["Enums"]["task_status"]
@@ -225,6 +227,8 @@ export type Database = {
           created_by: string
           description?: string | null
           due_date?: string | null
+          ghl_contact_id?: string | null
+          ghl_task_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
@@ -237,6 +241,8 @@ export type Database = {
           created_by?: string
           description?: string | null
           due_date?: string | null
+          ghl_contact_id?: string | null
+          ghl_task_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]

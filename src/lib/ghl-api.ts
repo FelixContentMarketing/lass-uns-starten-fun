@@ -156,10 +156,18 @@ export async function syncGhlTasks() {
   const tasks = await getGhlTasks();
 
   if (!tasks || tasks.length === 0) {
-    return { synced: 0, message: 'No tasks found in GoHighLevel' };
+    return { synced: 0, message: 'Keine Aufgaben in GoHighLevel gefunden' };
   }
 
   let syncedCount = 0;
+  let errorCount = 0;
+
+  // Get current user for created_by field
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('Nicht angemeldet');
+  }
 
   for (const task of tasks) {
     // Map GHL task status to our Kanban status (use English values for DB)
@@ -174,23 +182,31 @@ export async function syncGhlTasks() {
       .from('tasks')
       .upsert({
         ghl_task_id: task.id,
-        title: task.title,
+        title: task.title || 'Unbenannte Aufgabe',
         description: task.body || null,
         status: status,
         priority: 'medium',
         due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
-        assigned_to: task.assignedTo || null,
-        contact_id: task.contactId || null,
+        ghl_contact_id: task.contactId || null,
+        created_by: user.id,
       }, {
         onConflict: 'ghl_task_id',
+        ignoreDuplicates: false,
       });
 
-    if (!error) {
+    if (error) {
+      console.error('Fehler beim Synchronisieren von Task:', task.id, error);
+      errorCount++;
+    } else {
       syncedCount++;
     }
   }
 
-  return { synced: syncedCount, total: tasks.length };
+  return { 
+    synced: syncedCount, 
+    total: tasks.length,
+    errors: errorCount 
+  };
 }
 
 /**

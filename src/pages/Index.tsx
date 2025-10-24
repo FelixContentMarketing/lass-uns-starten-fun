@@ -20,8 +20,19 @@ const Index = () => {
     try {
       const result = await syncGhlTasks();
       await refetch();
-      toast.success(`${result.synced} von ${result.total} Aufgaben synchronisiert`);
+      
+      if (result.errors && result.errors > 0) {
+        toast.warning(
+          `${result.synced} von ${result.total} Aufgaben synchronisiert (${result.errors} Fehler)`,
+          { description: 'Einige Aufgaben konnten nicht synchronisiert werden. Prüfe die Console für Details.' }
+        );
+      } else if (result.message) {
+        toast.info(result.message);
+      } else {
+        toast.success(`${result.synced} von ${result.total} Aufgaben erfolgreich synchronisiert`);
+      }
     } catch (error: any) {
+      console.error('Sync-Fehler:', error);
       toast.error('Fehler bei der Synchronisation: ' + error.message);
     } finally {
       setSyncing(false);
