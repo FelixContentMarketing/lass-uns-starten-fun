@@ -70,7 +70,16 @@ export function TaskDetailDialog({ task, open, onOpenChange }: TaskDetailDialogP
       setDescription(task.description || "");
       setPriority(task.priority);
       setStatus(task.status);
-      setDueDate(task.dueDate || "");
+      
+      // Convert ISO date to yyyy-MM-dd format for input field
+      if (task.dueDate) {
+        const date = new Date(task.dueDate);
+        const formattedDate = date.toISOString().split('T')[0];
+        setDueDate(formattedDate);
+      } else {
+        setDueDate("");
+      }
+      
       setAssignedToGhlUserId(task.assignedTo || "unassigned");
       setGhlContactId(task.ghlContactId || "none");
     }
