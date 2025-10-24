@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          updated_by_user_id: string | null
+          value: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+          value?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
+      ghl_users: {
+        Row: {
+          email: string | null
+          ghl_user_id: string
+          id: string
+          last_synced_at: string
+          name: string | null
+        }
+        Insert: {
+          email?: string | null
+          ghl_user_id: string
+          id?: string
+          last_synced_at?: string
+          name?: string | null
+        }
+        Update: {
+          email?: string | null
+          ghl_user_id?: string
+          id?: string
+          last_synced_at?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -40,6 +91,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      task_files: {
+        Row: {
+          file_key: string
+          file_size: number | null
+          file_url: string
+          filename: string
+          id: string
+          mime_type: string | null
+          task_id: string
+          uploaded_at: string
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          file_key: string
+          file_size?: number | null
+          file_url: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          task_id: string
+          uploaded_at?: string
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          file_key?: string
+          file_size?: number | null
+          file_url?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          task_id?: string
+          uploaded_at?: string
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_files_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_history: {
         Row: {
@@ -69,6 +164,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "task_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_status_history: {
+        Row: {
+          changed_at: string
+          changed_by_user_id: string | null
+          id: string
+          new_status: Database["public"]["Enums"]["task_status"]
+          old_status: Database["public"]["Enums"]["task_status"] | null
+          task_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by_user_id?: string | null
+          id?: string
+          new_status: Database["public"]["Enums"]["task_status"]
+          old_status?: Database["public"]["Enums"]["task_status"] | null
+          task_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by_user_id?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["task_status"]
+          old_status?: Database["public"]["Enums"]["task_status"] | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_status_history_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
