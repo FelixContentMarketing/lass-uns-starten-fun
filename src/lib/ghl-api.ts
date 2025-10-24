@@ -184,21 +184,40 @@ export async function syncGhlTasks() {
       status = 'in_progress';
     }
 
-    const { error } = await supabase
+    // Check if task already exists
+    const { data: existingTask } = await supabase
       .from('tasks')
-      .upsert({
-        ghl_task_id: task.id,
-        title: task.title || 'Unbenannte Aufgabe',
-        description: task.body || null,
-        status: status,
-        priority: 'medium',
-        due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
-        ghl_contact_id: task.contactId || null,
-        created_by: user.id,
-      }, {
-        onConflict: 'ghl_task_id',
-        ignoreDuplicates: false,
-      });
+      .select('id')
+      .eq('ghl_task_id', task.id)
+      .single();
+
+    const taskData = {
+      ghl_task_id: task.id,
+      title: task.title || 'Unbenannte Aufgabe',
+      description: task.body || null,
+      status: status,
+      priority: 'medium',
+      due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
+      ghl_contact_id: task.contactId || null,
+      assigned_to: task.assignedTo || null,
+      created_by: user.id,
+    };
+
+    let error;
+    if (existingTask) {
+      // Update existing task
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update(taskData)
+        .eq('id', existingTask.id);
+      error = updateError;
+    } else {
+      // Insert new task
+      const { error: insertError } = await supabase
+        .from('tasks')
+        .insert(taskData);
+      error = insertError;
+    }
 
     if (error) {
       console.error('Fehler beim Synchronisieren von Task:', task.id, error);

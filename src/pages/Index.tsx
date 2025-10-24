@@ -1,19 +1,24 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { KanbanBoard } from "@/components/KanbanBoard";
+import { KanbanBoard } from "@/components/KanbanBoardDnD";
 import { CreateTaskDialog } from "@/components/CreateTaskDialog";
+import { TaskDetailDialog } from "@/components/TaskDetailDialog";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw } from "lucide-react";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { Task as DBTask } from "@/lib/supabase";
 import { Task } from "@/lib/types";
+import { TaskColumn } from "@/lib/constants";
 import { syncGhlTasks } from "@/lib/ghl-api";
 import { toast } from "sonner";
 
 const Index = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const { data: dbTasks, isLoading, refetch } = useTasks();
+  const updateTaskStatus = useUpdateTaskStatus();
 
   const handleSync = async () => {
     setSyncing(true);
@@ -52,7 +57,17 @@ const Index = () => {
   })) || [];
 
   const handleTaskClick = (task: Task) => {
-    console.log("Task clicked:", task);
+    setSelectedTask(task);
+    setDetailDialogOpen(true);
+  };
+
+  const handleTaskMove = async (taskId: string, newStatus: TaskColumn) => {
+    try {
+      await updateTaskStatus.mutateAsync({ id: taskId, newStatus });
+    } catch (error: any) {
+      console.error('Fehler beim Verschieben:', error);
+      toast.error('Fehler beim Verschieben der Aufgabe');
+    }
   };
 
   return (
@@ -81,10 +96,11 @@ const Index = () => {
             <p className="text-muted-foreground">Lade Aufgaben...</p>
           </div>
         ) : (
-          <KanbanBoard tasks={tasks} onTaskClick={handleTaskClick} />
+          <KanbanBoard tasks={tasks} onTaskClick={handleTaskClick} onTaskMove={handleTaskMove} />
         )}
       </div>
       <CreateTaskDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <TaskDetailDialog task={selectedTask} open={detailDialogOpen} onOpenChange={setDetailDialogOpen} />
     </DashboardLayout>
   );
 };
