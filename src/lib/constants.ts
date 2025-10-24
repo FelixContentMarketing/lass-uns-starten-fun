@@ -2,10 +2,10 @@ export const APP_TITLE = "ProMech TASK Organizer";
 export const APP_LOGO = "/placeholder.svg"; // Can be replaced with your logo
 
 export const TASK_COLUMNS = {
-  INBOX: "inbox",
-  IN_APPROVAL: "in_approval", 
-  IN_PROGRESS: "in_progress",
-  DONE: "done",
+  INBOX: "posteingang",
+  IN_APPROVAL: "in_freigabe", 
+  IN_PROGRESS: "in_bearbeitung",
+  DONE: "erledigt",
 } as const;
 
 export const COLUMN_LABELS = {
@@ -16,10 +16,10 @@ export const COLUMN_LABELS = {
 } as const;
 
 export const PRIORITY_LABELS = {
-  low: "Niedrig",
-  medium: "Mittel",
-  high: "Hoch",
-  urgent: "Dringend",
+  niedrig: "Niedrig",
+  mittel: "Mittel",
+  hoch: "Hoch",
+  dringend: "Dringend",
 } as const;
 
 export type TaskColumn = typeof TASK_COLUMNS[keyof typeof TASK_COLUMNS];

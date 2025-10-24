@@ -13,10 +13,10 @@ interface TaskCardProps {
 }
 
 const priorityConfig = {
-  low: { color: "bg-blue-500/10 text-blue-700 border-blue-200", icon: Clock },
-  medium: { color: "bg-yellow-500/10 text-yellow-700 border-yellow-200", icon: AlertCircle },
-  high: { color: "bg-orange-500/10 text-orange-700 border-orange-200", icon: AlertCircle },
-  urgent: { color: "bg-red-500/10 text-red-700 border-red-200", icon: AlertCircle },
+  niedrig: { color: "bg-blue-500/10 text-blue-700 border-blue-200", icon: Clock },
+  mittel: { color: "bg-yellow-500/10 text-yellow-700 border-yellow-200", icon: AlertCircle },
+  hoch: { color: "bg-orange-500/10 text-orange-700 border-orange-200", icon: AlertCircle },
+  dringend: { color: "bg-red-500/10 text-red-700 border-red-200", icon: AlertCircle },
 };
 
 export function TaskCard({ task, onClick }: TaskCardProps) {
@@ -60,7 +60,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
               <span>{task.assignedTo}</span>
             </div>
           )}
-          {task.status === "done" && (
+          {task.status === "erledigt" && (
             <div className="flex items-center gap-2 text-green-600">
               <CheckCircle2 className="h-4 w-4" />
               <span>Erledigt</span>
