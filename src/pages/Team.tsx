@@ -7,6 +7,7 @@ import { syncGhlUsers } from "@/lib/ghl-api";
 import { toast } from "sonner";
 import { RefreshCw, Users as UsersIcon } from "lucide-react";
 import { useState } from "react";
+import { AddUserDialog } from "@/components/AddUserDialog";
 
 const Team = () => {
   const [syncing, setSyncing] = useState(false);
@@ -47,10 +48,13 @@ const Team = () => {
               GoHighLevel Benutzer verwalten und synchronisieren
             </p>
           </div>
-          <Button onClick={handleSync} disabled={syncing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            Synchronisieren
-          </Button>
+          <div className="flex gap-2">
+            <AddUserDialog onUserAdded={() => refetch()} />
+            <Button onClick={handleSync} disabled={syncing} variant="outline">
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+              Synchronisieren
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -69,12 +73,15 @@ const Team = () => {
             ) : !ghlUsers || ghlUsers.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground mb-4">
-                  Noch keine Benutzer synchronisiert
+                  Noch keine Benutzer vorhanden
                 </p>
-                <Button onClick={handleSync} disabled={syncing}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                  Jetzt synchronisieren
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  <AddUserDialog onUserAdded={() => refetch()} />
+                  <Button onClick={handleSync} disabled={syncing} variant="outline">
+                    <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                    Synchronisieren
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-2">
