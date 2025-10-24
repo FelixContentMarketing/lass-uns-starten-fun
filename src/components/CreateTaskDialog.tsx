@@ -253,11 +253,13 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="unassigned">Nicht zugewiesen</SelectItem>
-                {ghlUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.ghl_user_id}>
-                    {user.name || user.email || user.ghl_user_id}
-                  </SelectItem>
-                ))}
+                {ghlUsers
+                  .filter((user) => user.ghl_user_id && user.ghl_user_id.trim() !== "")
+                  .map((user) => (
+                    <SelectItem key={user.id} value={user.ghl_user_id}>
+                      {user.name || user.email || user.ghl_user_id}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
