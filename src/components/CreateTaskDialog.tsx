@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTask } from "@/hooks/useTasks";
-import { Loader2, Sparkles, Upload } from "lucide-react";
+import { useGhlUsers, useSyncGhlUsers } from "@/hooks/useGhlUsers";
+import { Loader2, Sparkles, Upload, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
@@ -23,8 +24,19 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const [emailText, setEmailText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [assignedToGhlUserId, setAssignedToGhlUserId] = useState<string>("");
+  const [ghlContactId, setGhlContactId] = useState<string>("");
 
   const createTask = useCreateTask();
+  const { data: ghlUsers = [], isLoading: loadingUsers } = useGhlUsers();
+  const syncUsers = useSyncGhlUsers();
+
+  // Sync GHL users on first open
+  useEffect(() => {
+    if (open && ghlUsers.length === 0) {
+      syncUsers.mutate();
+    }
+  }, [open]);
 
   const analyzeEmailWithAI = async () => {
     if (!emailText.trim()) {
@@ -114,6 +126,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         due_date: dueDate || undefined,
         status: 'posteingang',
         created_by: user.id,
+        assigned_to: assignedToGhlUserId || undefined,
+        ghl_contact_id: ghlContactId || undefined,
       });
 
       // Upload files if any
@@ -154,6 +168,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       setDueDate("");
       setEmailText("");
       setFiles([]);
+      setAssignedToGhlUserId("");
+      setGhlContactId("");
       onOpenChange(false);
     } catch (error: any) {
       toast.error('Fehler beim Erstellen: ' + error.message);
@@ -249,6 +265,51 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Assign to User */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="assigned-to">Zuweisen an</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => syncUsers.mutate()}
+                disabled={syncUsers.isPending}
+              >
+                <RefreshCw className={`h-3 w-3 ${syncUsers.isPending ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            <Select value={assignedToGhlUserId} onValueChange={setAssignedToGhlUserId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Beauftragten auswählen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Nicht zugewiesen</SelectItem>
+                {ghlUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.ghl_user_id}>
+                    {user.name || user.email || user.ghl_user_id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* GHL Contact ID */}
+          <div className="space-y-2">
+            <Label htmlFor="ghl-contact-id">
+              GoHighLevel Kontakt-ID (Optional)
+            </Label>
+            <Input
+              id="ghl-contact-id"
+              value={ghlContactId}
+              onChange={(e) => setGhlContactId(e.target.value)}
+              placeholder="z.B. nCv8ggmlFgT8QhXWUEKX"
+            />
+            <p className="text-xs text-muted-foreground">
+              Nur erforderlich, wenn die Aufgabe mit GoHighLevel synchronisiert werden soll
+            </p>
           </div>
 
           {/* File Upload */}

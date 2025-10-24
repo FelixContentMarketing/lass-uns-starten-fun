@@ -73,33 +73,38 @@ export function useCreateTask() {
 
       if (error) throw error;
       
-      // Synchronize to GoHighLevel
-      try {
-        const ghlTask = await createGhlTask({
-          title: data.title,
-          body: data.description || undefined,
-          dueDate: data.due_date || undefined,
-          assignedTo: data.assigned_to || undefined,
-          contactId: data.contact_id || undefined,
-        });
-        
-        // Update local task with GHL task ID
-        if (ghlTask?.task?.id) {
-          await supabase
-            .from('tasks')
-            .update({ ghl_task_id: ghlTask.task.id })
-            .eq('id', data.id);
+      // Synchronize to GoHighLevel (only if contactId is provided)
+      if (data.ghl_contact_id) {
+        try {
+          const ghlTask = await createGhlTask({
+            title: data.title,
+            contactId: data.ghl_contact_id,
+            body: data.description || undefined,
+            dueDate: data.due_date || undefined,
+            assignedTo: data.assigned_to || undefined,
+          });
+          
+          // Update local task with GHL task ID
+          if (ghlTask?.task?.id) {
+            await supabase
+              .from('tasks')
+              .update({ ghl_task_id: ghlTask.task.id })
+              .eq('id', data.id);
+          }
+          
+          toast.success('Aufgabe erstellt und zu GoHighLevel synchronisiert');
+        } catch (ghlError: any) {
+          console.error('GoHighLevel sync error:', ghlError);
+          toast.warning('Aufgabe erstellt, aber nicht zu GoHighLevel synchronisiert: ' + ghlError.message);
         }
-      } catch (ghlError: any) {
-        console.error('GoHighLevel sync error:', ghlError);
-        toast.warning('Aufgabe erstellt, aber nicht zu GoHighLevel synchronisiert: ' + ghlError.message);
+      } else {
+        toast.info('Aufgabe erstellt (ohne GHL-Synchronisation - kein Kontakt ausgewählt)');
       }
       
       return data as Task;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Aufgabe erfolgreich erstellt und zu GoHighLevel synchronisiert');
     },
     onError: (error) => {
       toast.error('Fehler beim Erstellen der Aufgabe: ' + error.message);
@@ -128,10 +133,10 @@ export function useUpdateTask() {
 
       if (error) throw error;
       
-      // Synchronize to GoHighLevel if task has ghl_task_id
-      if (data.ghl_task_id) {
+      // Synchronize to GoHighLevel if task has ghl_task_id and ghl_contact_id
+      if (data.ghl_task_id && data.ghl_contact_id) {
         try {
-          await updateGhlTask(data.ghl_task_id, {
+          await updateGhlTask(data.ghl_task_id, data.ghl_contact_id, {
             title: data.title,
             body: data.description || undefined,
             dueDate: data.due_date || undefined,
@@ -161,10 +166,10 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      // Get task to check if it has ghl_task_id
+      // Get task to check if it has ghl_task_id and ghl_contact_id
       const { data: task } = await supabase
         .from('tasks')
-        .select('ghl_task_id')
+        .select('ghl_task_id, ghl_contact_id')
         .eq('id', id)
         .single();
       
@@ -175,10 +180,10 @@ export function useDeleteTask() {
 
       if (error) throw error;
       
-      // Delete from GoHighLevel if task has ghl_task_id
-      if (task?.ghl_task_id) {
+      // Delete from GoHighLevel if task has ghl_task_id and ghl_contact_id
+      if (task?.ghl_task_id && task?.ghl_contact_id) {
         try {
-          await deleteGhlTask(task.ghl_task_id);
+          await deleteGhlTask(task.ghl_task_id, task.ghl_contact_id);
         } catch (ghlError: any) {
           console.error('GoHighLevel delete error:', ghlError);
           toast.warning('Aufgabe gelöscht, aber nicht aus GoHighLevel entfernt');
@@ -212,7 +217,7 @@ export function useUpdateTaskStatus() {
       // Get current task to log status history and check for ghl_task_id
       const { data: currentTask } = await supabase
         .from('tasks')
-        .select('status, ghl_task_id')
+        .select('status, ghl_task_id, ghl_contact_id')
         .eq('id', id)
         .single();
 
@@ -235,9 +240,9 @@ export function useUpdateTaskStatus() {
         }]);
         
         // Synchronize status to GoHighLevel
-        if (currentTask.ghl_task_id) {
+        if (currentTask.ghl_task_id && currentTask.ghl_contact_id) {
           try {
-            await updateGhlTask(currentTask.ghl_task_id, {
+            await updateGhlTask(currentTask.ghl_task_id, currentTask.ghl_contact_id, {
               completed: dbStatus === 'done',
             });
           } catch (ghlError: any) {

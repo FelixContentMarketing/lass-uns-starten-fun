@@ -31,17 +31,22 @@ async function getGhlCredentials() {
 
 /**
  * Create a task in GoHighLevel
+ * Note: Tasks MUST be associated with a contact in GHL
  */
 export async function createGhlTask(task: {
   title: string;
+  contactId: string; // Required in GHL
   body?: string;
   dueDate?: string;
   assignedTo?: string;
-  contactId?: string;
 }) {
   const { token } = await getGhlCredentials();
 
-  const response = await fetch(`${GHL_API_BASE_URL}/tasks/`, {
+  if (!task.contactId) {
+    throw new Error('contactId ist erforderlich zum Erstellen einer GHL-Aufgabe');
+  }
+
+  const response = await fetch(`${GHL_API_BASE_URL}/contacts/${task.contactId}/tasks`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -53,7 +58,6 @@ export async function createGhlTask(task: {
       body: task.body,
       dueDate: task.dueDate,
       assignedTo: task.assignedTo,
-      contactId: task.contactId,
     }),
   });
 
@@ -62,13 +66,15 @@ export async function createGhlTask(task: {
     throw new Error(`GHL API Error: ${error}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  // GHL returns task ID in _id field
+  return { task: { id: result._id || result.id, ...result } };
 }
 
 /**
  * Update a task in GoHighLevel
  */
-export async function updateGhlTask(taskId: string, updates: {
+export async function updateGhlTask(taskId: string, contactId: string, updates: {
   title?: string;
   body?: string;
   dueDate?: string;
@@ -77,7 +83,7 @@ export async function updateGhlTask(taskId: string, updates: {
 }) {
   const { token } = await getGhlCredentials();
 
-  const response = await fetch(`${GHL_API_BASE_URL}/tasks/${taskId}`, {
+  const response = await fetch(`${GHL_API_BASE_URL}/contacts/${contactId}/tasks/${taskId}`, {
     method: 'PUT',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -98,10 +104,10 @@ export async function updateGhlTask(taskId: string, updates: {
 /**
  * Delete a task in GoHighLevel
  */
-export async function deleteGhlTask(taskId: string) {
+export async function deleteGhlTask(taskId: string, contactId: string) {
   const { token } = await getGhlCredentials();
 
-  const response = await fetch(`${GHL_API_BASE_URL}/tasks/${taskId}`, {
+  const response = await fetch(`${GHL_API_BASE_URL}/contacts/${contactId}/tasks/${taskId}`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
