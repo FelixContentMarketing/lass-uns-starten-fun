@@ -117,9 +117,6 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         return;
       }
 
-      // Find the internal UUID of the selected GHL user
-      const selectedUser = ghlUsers.find(u => u.ghl_user_id === assignedToGhlUserId);
-      
       await createTask.mutateAsync({
         title,
         description,
@@ -127,7 +124,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         due_date: dueDate || undefined,
         status: 'posteingang',
         created_by: user.id,
-        assigned_to: selectedUser?.id,
+        assigned_to: assignedToGhlUserId === 'unassigned' ? undefined : assignedToGhlUserId,
         ghl_contact_id: ghlContactId || undefined,
       });
 

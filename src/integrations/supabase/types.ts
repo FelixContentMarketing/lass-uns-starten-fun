@@ -251,11 +251,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "tasks_assigned_to_fkey"
+            foreignKeyName: "tasks_assigned_to_ghl_user_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: "ghl_users"
+            referencedColumns: ["ghl_user_id"]
           },
         ]
       }
