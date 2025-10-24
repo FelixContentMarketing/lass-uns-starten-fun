@@ -118,17 +118,19 @@ export async function deleteGhlTask(taskId: string) {
 }
 
 /**
- * Get tasks from GoHighLevel
+ * Get tasks from GoHighLevel using location-level search
  */
 export async function getGhlTasks() {
   const { token, locationId } = await getGhlCredentials();
 
-  const response = await fetch(`${GHL_API_BASE_URL}/contacts/tasks/search?locationId=${locationId}`, {
-    method: 'GET',
+  const response = await fetch(`${GHL_API_BASE_URL}/locations/${locationId}/tasks/search`, {
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Version': GHL_API_VERSION,
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({}), // Empty body for fetching all tasks
   });
 
   if (!response.ok) {
