@@ -201,11 +201,11 @@ export async function syncGhlTasks() {
     }
 
     // Check if task already exists
-    const { data: existingTask } = await supabase
+    const { data: existingTask, error: selectError } = await supabase
       .from('tasks')
       .select('id')
       .eq('ghl_task_id', task.id)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error when no match
 
     const taskData = {
       ghl_task_id: task.id,
