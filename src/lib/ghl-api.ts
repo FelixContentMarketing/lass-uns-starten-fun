@@ -191,6 +191,20 @@ export async function syncGhlTasks() {
       .eq('ghl_task_id', task.id)
       .single();
 
+    // Check if assigned user exists in ghl_users, otherwise set to null
+    let assignedTo = null;
+    if (task.assignedTo) {
+      const { data: ghlUser } = await supabase
+        .from('ghl_users')
+        .select('ghl_user_id')
+        .eq('ghl_user_id', task.assignedTo)
+        .single();
+      
+      if (ghlUser) {
+        assignedTo = task.assignedTo;
+      }
+    }
+
     const taskData = {
       ghl_task_id: task.id,
       title: task.title || 'Unbenannte Aufgabe',
@@ -199,7 +213,7 @@ export async function syncGhlTasks() {
       priority: 'medium',
       due_date: task.dueDate ? new Date(task.dueDate).toISOString() : null,
       ghl_contact_id: task.contactId || null,
-      assigned_to: task.assignedTo || null,
+      assigned_to: assignedTo,
       created_by: user.id,
     };
 

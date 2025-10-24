@@ -249,15 +249,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_assigned_to_ghl_user_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "ghl_users"
-            referencedColumns: ["ghl_user_id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {

@@ -3,8 +3,8 @@ export const APP_LOGO = "/placeholder.svg"; // Can be replaced with your logo
 
 export const TASK_COLUMNS = {
   INBOX: "posteingang",
-  IN_APPROVAL: "in_freigabe", 
   IN_PROGRESS: "in_bearbeitung",
+  IN_APPROVAL: "in_freigabe", 
   DONE: "erledigt",
 } as const;
 

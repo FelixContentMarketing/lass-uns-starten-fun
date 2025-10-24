@@ -127,6 +127,22 @@ export function KanbanBoard({ tasks, onTaskClick, onTaskMove }: KanbanBoardProps
     setActiveTask(task || null);
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+
+    const taskId = active.id as string;
+    const overId = over.id as string;
+    
+    // Check if we're over a column
+    const overColumn = columns.find(col => col === overId);
+    if (!overColumn) return;
+    
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || task.status === overColumn) return;
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTask(null);
@@ -151,6 +167,7 @@ export function KanbanBoard({ tasks, onTaskClick, onTaskMove }: KanbanBoardProps
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-full">
